@@ -473,8 +473,9 @@ function main() {
                             if (result[i].subType === 'V_LIGHT')  result[i].subType = 'V_STATUS';
                             if (result[i].subType === 'V_DIMMER') result[i].subType = 'V_PERCENTAGE';
                             if (result[i].subType === 'V_DUST_LEVEL') result[i].subType = 'V_LEVEL';
-
-                            saveResult(id, result[i], ip, true);
+                            if (result[i].ack === false){
+                                saveResult(id, result[i], ip, true);
+                            }
                         }
                     } else if (result[i].type === 'req') {
                         reqGetSend(id, result[i], ip, true);
