@@ -19,6 +19,7 @@ var inclusionTimeout = false;
 var path;
 var fs;
 var config = {};
+var ackDelay = 1000;
 
 try {
     serialport = require('serialport');//.SerialPort;
@@ -107,6 +108,16 @@ adapter.on('unload', function (callback) {
     }
 });
 
+function waitForAck(obj_id){
+    adapter.getState('info.nackCounter', function (err, state) {
+        if (!err) {
+            adapter.setState('info.nackCounter', state.val+1 , true);
+        }
+    });
+    adapter.log.warn("Did not receive ack from: " + JSON.stringify(devices[obj_id]));
+    delete devices[obj_id].native.ackWaitProc;
+}
+
 function send_message(obj_id, state){
     if (typeof state.val === 'boolean') state.val = state.val ? 1 : 0;
     if (state.val === 'true')  state.val = 1;
@@ -119,6 +130,7 @@ function send_message(obj_id, state){
         devices[obj_id].native.childId      + ';1;1;' +
         devices[obj_id].native.varTypeNum   + ';' +
         state.val, devices[obj_id].native.ip);
+    devices[obj_id].native.ackWaitProc = setTimeout(waitForAck,ackDelay,obj_id); 
 }
 
 function findObjAckFalse(ip, node_id) {
@@ -222,22 +234,29 @@ function findDevice(result, ip, subType) {
     return -1;
 }
 
-function saveResult(id, result, ip, subType) {
+function saveResult(id, result, ip, subType, isAck) {
     if (id === -1) id = findDevice(result, ip, subType);
-    if (id !== -1 && devices[id]) {
-        if (devices[id].common.type === 'boolean') {
-            result.payload = result.payload === 'true' || result.payload === true || result.payload === '1' || result.payload === 1;
-            //result.payload = !!result[i].payload;
-        }
-        if (devices[id].common.type === 'number')  result.payload = parseFloat(result.payload);
-
-        adapter.log.debug('Set value ' + (devices[id].common.name || id) + ' ' + result.childId + ': ' + result.payload + ' ' + typeof result.payload);
-        adapter.setState(id, result.payload, true);
-
+    if (id !== -1 && devices[id]){
+	if(isAck === false){
+	    if (devices[id].common.type === 'boolean') {
+		result.payload = result.payload === 'true' || result.payload === true || result.payload === '1' || result.payload === 1;
+		//result.payload = !!result[i].payload;
+	    }
+	    if (devices[id].common.type === 'number')  result.payload = parseFloat(result.payload);
+            
+	    adapter.log.debug('Set value ' + (devices[id].common.name || id) + ' ' + result.childId + ': ' + result.payload + ' ' + typeof result.payload);
+	    adapter.setState(id, result.payload, true);
+	} 
+	else{
+	//TODO compare payload with field data?
+ 	   clearTimeout(devices[id].native.ackWaitProc);
+	   delete devices[id].native.ackWaitProc;
+	}
         return id;
     }
     return 0;
 }
+
 
 function reqGetSend(id, result, ip, subType) {
     if (id === -1) id = findDevice(result, ip, subType);
@@ -262,7 +281,6 @@ function reqGetSend(id, result, ip, subType) {
                 }
             }
         });
-        
         return id;
     }
     return 0;
@@ -278,7 +296,6 @@ function processPresentation(data, ip, port) {
         return null;
     }
 
-    
 
     if (!result || !result.length) {
         adapter.log.warn('Cannot parse data: ' + data);
@@ -297,7 +314,7 @@ function processPresentation(data, ip, port) {
                 if (!found) {
                     adapter.log.debug('ID not found. Try to add to to DB');
                     var objs = getMeta(result[i], ip, port, config[ip || 'serial']);
-                    for (var j = 0; j < objs.length; j++) {
+		    for (var j = 0; j < objs.length; j++) {
                         adapter.log.debug('Check ' + JSON.stringify(devices[adapter.namespace + '.' + objs[j]._id]));
                         if (!devices[adapter.namespace + '.' + objs[j]._id]) {
                             devices[adapter.namespace + '.' + objs[j]._id] = objs[j];
@@ -343,7 +360,7 @@ function processPresentation(data, ip, port) {
                         adapter.log.debug('ID not found. Try to add to to DB');
                         var common_name = devices[foundObjID].common.name.split('.');
                         var objs = getMeta2(result[i], ip, port, config[ip || 'serial'], devices[foundObjID].native.subType, common_name[0]);
-                        if (!devices[adapter.namespace + '.' + objs[0]._id]) {
+			if (!devices[adapter.namespace + '.' + objs[0]._id]) {
                             devices[adapter.namespace + '.' + objs[0]._id] = objs[0];
                             adapter.log.info('Add new object: ' + objs[0]._id + ' - ' + objs[0].common.name);
                             adapter.setObject(objs[0]._id, objs[0], function (err) {
@@ -410,6 +427,7 @@ function main() {
         setInclusionState(state ? state.val : false);
     });
 
+    
     // read current existing objects (прочитать текущие существующие объекты)
     adapter.getForeignObjects(adapter.namespace + '.*', 'state', function (err, states) {
         // subscribe on changes
@@ -436,6 +454,28 @@ function main() {
                 }
             }, function (err) {
                 if (err) adapter.log.error(err);
+            });
+        }
+	
+	if (!devices[adapter.namespace + '.info.nackCounter'] || !devices[adapter.namespace + '.info.nackCounter'].common ||
+            devices[adapter.namespace + '.info.nackCounter'].common.type !== 'number') {
+            adapter.setForeignObject(adapter.namespace + '.info.nackCounter', {
+                _id:  'info.nackCounter',
+                type: 'state',
+                common: {
+                    role:  'nack.counter',
+                //    name:  adapter.config.type === 'serial' ? 'If connected to my sensors' : 'List of connected gateways',
+                    type:  'number',
+                    read:  true,
+                    write: false,
+                    def:   false
+                },
+                native: {
+
+                }
+            }, function (err) {
+                if (err) adapter.log.error(err);
+		else adapter.setState('info.nackCounter', 0 , true);
             });
         }
 
@@ -473,10 +513,8 @@ function main() {
                             if (result[i].subType === 'V_LIGHT')  result[i].subType = 'V_STATUS';
                             if (result[i].subType === 'V_DIMMER') result[i].subType = 'V_PERCENTAGE';
                             if (result[i].subType === 'V_DUST_LEVEL') result[i].subType = 'V_LEVEL';
-                            if (result[i].ack === false){
-                                saveResult(id, result[i], ip, true);
-                            }
-                        }
+                            saveResult(id, result[i], ip, true,result[i].ack);
+                                                    }
                     } else if (result[i].type === 'req') {
                         reqGetSend(id, result[i], ip, true);
                     } else if (result[i].type === 'internal') {
@@ -569,7 +607,7 @@ function main() {
                         }
 
                         if (saveValue) {
-                            saveResult(id, result[i], ip, true);
+                            saveResult(id, result[i], ip, true,false);
                             if (result[i].subType === 'I_HEARTBEAT_RESPONSE'){
                                 adapter.log.debug('Send unsent values');
                                 findObjAckFalse(ip, result[i].id); 

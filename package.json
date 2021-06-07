@@ -1,11 +1,37 @@
 {
-  "name": "iobroker.mysensors",
-  "version": "2.0.1",
-  "description": "ioBroker mysensors Adapter",
+  "_from": "https://github.com/mysensors-wired/ioBroker.mysensors/tarball/7454335fe7f135b0f59f63860bf6ce33588c554d",
+  "_id": "iobroker.mysensors@2.0.1",
+  "_inBundle": false,
+  "_integrity": "sha512-qSDIjE2WCz/0xozMxgnIrYRlcQmTsG1jQFU6sDkqepaekc0q6SRD+Y8LBGt3WhVzDSv4/ZZ9cNwqZDAWkncYGg==",
+  "_location": "/iobroker.mysensors",
+  "_phantomChildren": {
+    "@serialport/binding-mock": "2.0.5",
+    "@serialport/bindings": "2.0.8",
+    "@serialport/stream": "2.0.5"
+  },
+  "_requested": {
+    "type": "remote",
+    "raw": "https://github.com/mysensors-wired/ioBroker.mysensors/tarball/7454335fe7f135b0f59f63860bf6ce33588c554d",
+    "rawSpec": "https://github.com/mysensors-wired/ioBroker.mysensors/tarball/7454335fe7f135b0f59f63860bf6ce33588c554d",
+    "saveSpec": "https://github.com/mysensors-wired/ioBroker.mysensors/tarball/7454335fe7f135b0f59f63860bf6ce33588c554d",
+    "fetchSpec": "https://github.com/mysensors-wired/ioBroker.mysensors/tarball/7454335fe7f135b0f59f63860bf6ce33588c554d"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://github.com/mysensors-wired/ioBroker.mysensors/tarball/7454335fe7f135b0f59f63860bf6ce33588c554d",
+  "_shasum": "2acdb80c44136674c138729881c3174113e9a18e",
+  "_spec": "https://github.com/mysensors-wired/ioBroker.mysensors/tarball/7454335fe7f135b0f59f63860bf6ce33588c554d",
+  "_where": "/opt/iobroker",
   "author": {
     "name": "bluefox",
     "email": "dogafox@gmail.com"
   },
+  "bugs": {
+    "url": "https://github.com/ioBroker/ioBroker.mysensors/issues"
+  },
+  "bundleDependencies": false,
   "contributors": [
     {
       "name": "Bluefox",
@@ -16,37 +42,38 @@
       "email": "gstar-tools@rambler.ru"
     }
   ],
+  "dependencies": {
+    "@iobroker/adapter-core": "^1.0.3",
+    "sensors": "2.0.0",
+    "serialport": "^7.1.5"
+  },
+  "deprecated": false,
+  "description": "ioBroker mysensors Adapter",
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "gulp": "^3.9.1",
+    "mocha": "^4.1.0",
+    "nan": "2.4.0"
+  },
   "homepage": "https://github.com/ioBroker/ioBroker.mysensors",
-  "license": "MIT",
   "keywords": [
     "ioBroker",
     "mysensors",
     "Smart Home",
     "home automation"
   ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/ioBroker/ioBroker.mysensors"
-  },
+  "license": "MIT",
+  "main": "main.js",
+  "name": "iobroker.mysensors",
   "optionalDependencies": {
     "serialport": "^7.1.5"
   },
-  "dependencies": {
-    "sensors": "2.0.0",
-    "@iobroker/adapter-core": "^1.0.3"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ioBroker/ioBroker.mysensors.git"
   },
-  "devDependencies": {
-    "gulp": "^3.9.1",
-    "mocha": "^4.1.0",
-    "chai": "^4.1.2",
-    "nan": "2.4.0"
-  },
-  "bugs": {
-    "url": "https://github.com/ioBroker/ioBroker.mysensors/issues"
-  },
-  "main": "main.js",
   "scripts": {
     "test": "node node_modules/mocha/bin/mocha --exit"
   },
-  "readmeFilename": "README.md"
+  "version": "2.0.1"
 }
